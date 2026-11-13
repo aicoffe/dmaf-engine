@@ -13,7 +13,7 @@ fn trail(tag: &str) -> (std::path::PathBuf, AuditTrail) {
 
 #[test]
 fn append_builds_chain() {
-    let (tmp, t) = trail("chain");
+    let (_tmp, t) = trail("chain");
     let s1 = t
         .append("wf-x", "workflow.started", None, None, json!({}), &genesis_hash(),
                 &format!("sha256:{}", "a".repeat(64)), "2026-10-13T10:00:00+08:00")
@@ -33,7 +33,7 @@ fn append_builds_chain() {
 
 #[test]
 fn unknown_event_type_rejected() {
-    let (tmp, t) = trail("bad-event");
+    let (_tmp, t) = trail("bad-event");
     assert!(t
         .append("wf-x", "state.transitioned", None, None, json!({}), &genesis_hash(),
                 &genesis_hash(), "t")
@@ -101,7 +101,7 @@ fn removed_shard_breaks_seq() {
 
 #[test]
 fn shard_matches_schema() {
-    let (tmp, t) = trail("schema");
+    let (_tmp, t) = trail("schema");
     let shard = t
         .append("wf-x", "workflow.started", None, None, json!({"k": "v"}), &genesis_hash(),
                 &format!("sha256:{}", "a".repeat(64)), "2026-10-13T10:00:00+08:00")

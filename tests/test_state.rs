@@ -111,21 +111,21 @@ fn parse_rejects_broken_body() {
     let original = make_state();
     let text = state::render(&original);
     // 复选框与状态不一致
-    let broken = text.replace_first("attempt 1 success", "attempt 1 failed");
+    let broken = text.replace_once("attempt 1 success", "attempt 1 failed");
     assert!(matches!(state::parse(&broken), Err(StateError(_))));
     // 未知行
-    let rubbish = text.replace_first("# Stages", "# Stages\nrubbish line");
+    let rubbish = text.replace_once("# Stages", "# Stages\nrubbish line");
     assert!(matches!(state::parse(&rubbish), Err(StateError(_))));
     // 缺 front matter
     assert!(matches!(state::parse("no front matter"), Err(StateError(_))));
 }
 
-trait ReplaceFirst {
-    fn replace_first(&self, from: &str, to: &str) -> String;
+trait ReplaceOnce {
+    fn replace_once(&self, from: &str, to: &str) -> String;
 }
 
-impl ReplaceFirst for str {
-    fn replace_first(&self, from: &str, to: &str) -> String {
+impl ReplaceOnce for str {
+    fn replace_once(&self, from: &str, to: &str) -> String {
         match self.find(from) {
             Some(idx) => {
                 let mut s = String::with_capacity(self.len());

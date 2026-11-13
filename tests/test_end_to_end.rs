@@ -196,7 +196,7 @@ fn abort_when_research_exhausted() {
     // max_attempts:1 = 最多重试 1 次；两次失败后 abort_workflow
     let driver = common::Driver::with_tag("abort");
     let session = session_of(&driver.start_default());
-    let sid = std::path::Path::new(&session)
+    let _sid = std::path::Path::new(&session)
         .file_name()
         .unwrap()
         .to_string_lossy()
@@ -298,7 +298,7 @@ fn continue_semantics_when_video_exhausted() {
 fn duplicate_report_conflict() {
     let driver = common::Driver::with_tag("dup-report");
     let session = session_of(&driver.start_default());
-    let sid = std::path::Path::new(&session)
+    let _sid = std::path::Path::new(&session)
         .file_name()
         .unwrap()
         .to_string_lossy()
@@ -319,7 +319,7 @@ fn duplicate_report_conflict() {
 fn schema_violation_rejected_state_unchanged() {
     let driver = common::Driver::with_tag("schema-reject");
     let session = session_of(&driver.start_default());
-    let sid = std::path::Path::new(&session)
+    let _sid = std::path::Path::new(&session)
         .file_name()
         .unwrap()
         .to_string_lossy()
@@ -337,7 +337,7 @@ fn schema_violation_rejected_state_unchanged() {
 fn cancel_mid_flow() {
     let driver = common::Driver::with_tag("cancel");
     let session = session_of(&driver.start_default());
-    let sid = std::path::Path::new(&session)
+    let _sid = std::path::Path::new(&session)
         .file_name()
         .unwrap()
         .to_string_lossy()

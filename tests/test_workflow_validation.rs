@@ -3,7 +3,7 @@
 mod common;
 
 use common::TmpGuard;
-use dmaf_engine::registry::{load_registry, validate_refs, HarnessLayout};
+use dmaf_engine::registry::validate_refs;
 use dmaf_engine::workflow::{check_templates, load_workflow, parse_workflow, resolve_vars, WorkflowError};
 use serde_json::json;
 
@@ -152,7 +152,7 @@ fn producer_after_consumer_detected() {
     // 硬输入的生产者排在消费者之后 → 编译错（顺序即执行序）
     let driver = common::Driver::with_tag("late-producer");
     let _g = TmpGuard(driver.tmp.clone());
-    let mut stages = base_stages();
+    let stages = base_stages();
     let swapped = json!([stages[1].clone(), stages[0].clone()]);
     let err = write_wf_try(&driver.tmp, &wf_doc(&["knowledge_point"], swapped)).unwrap_err();
     assert!(
