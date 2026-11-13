@@ -1,4 +1,4 @@
-// npm 平台包装配脚本：从 dist 归档产物装配 @aicoffe/dmaf-* 平台包并统一改写版本号。
+// npm 平台包装配脚本：从 dist 归档产物装配 @aicoffe/dmaf-engine-* 平台包并统一改写版本号。
 // 用法：node npm/build.cjs <版本(如 0.7.0)> [dist产物目录(默认 target/distrib)]
 // 设计：docs-dev/引擎安装与分发实施方案.md §6.5（D6 拍板 esbuild 多包模式；linux 侧直接复用 musl 静态二进制）。
 // 产物命名冻结为 dist 0.34 实际形态（§6.1）：dmaf-engine-<target>.tar.xz / .zip（无版本段）；归档经系统 tar 解包（bsdtar/GNU tar 均可，Windows 10+ 自带）。
@@ -8,7 +8,7 @@ const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
-const ROOT = path.join(__dirname, "dmaf");
+const ROOT = path.join(__dirname, "dmaf-engine");
 const OUT = path.join(__dirname, "pkg");
 
 // dist target triple → npm 平台包
@@ -37,7 +37,7 @@ for (const [target, meta] of Object.entries(TARGETS)) {
     console.error(`build.cjs: archive not found: ${archive} (run the release build first, or pass the distrib dir)`);
     process.exit(1);
   }
-  const name = `@aicoffe/dmaf-${meta.slug}`;
+  const name = `@aicoffe/dmaf-engine-${meta.slug}`;
   const dir = path.join(OUT, meta.slug);
   const extractDir = path.join(dir, ".extract");
   fs.mkdirSync(extractDir, { recursive: true });
@@ -76,4 +76,4 @@ for (const name of platNames) mainPkg.optionalDependencies[name] = version;
 fs.writeFileSync(path.join(ROOT, "package.json"), JSON.stringify(mainPkg, null, 2) + "\n");
 
 console.log(`assembled ${platNames.length} platform packages into npm/pkg/ (version ${version})`);
-console.log("publish order: platform packages first, then npm/dmaf (see npm/README.md)");
+console.log("publish order: platform packages first, then npm/dmaf-engine (see npm/README.md)");

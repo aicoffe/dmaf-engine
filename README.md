@@ -99,7 +99,7 @@ curl -fsSL https://dmaf.aicoffe.com/install.sh | sh
 irm https://dmaf.aicoffe.com/install.ps1 | iex
 
 # npm (all platforms)
-npm i -g @aicoffe/dmaf
+npm i -g @aicoffe/dmaf-engine
 ```
 
 Download source defaults to the official market with automatic GitHub fallback; pin it with `--source github` (sh) / `-Source github` (ps1). Verify the install with `dmaf doctor`. Building from source (`cargo install dmaf-engine`) remains available as a fallback.

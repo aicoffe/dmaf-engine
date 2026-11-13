@@ -1,5 +1,5 @@
 {
-  "name": "@aicoffe/dmaf",
+  "name": "@aicoffe/dmaf-engine",
   "version": "0.0.0-dev",
   "description": "D-MAF engine binary (dmaf). Platform binaries are shipped via optionalDependencies (esbuild-style); no download at install time.",
   "license": "MIT OR Apache-2.0",
@@ -17,10 +17,10 @@
     "node": ">=14"
   },
   "optionalDependencies": {
-    "@aicoffe/dmaf-darwin-arm64": "0.0.0-dev",
-    "@aicoffe/dmaf-darwin-x64": "0.0.0-dev",
-    "@aicoffe/dmaf-linux-arm64": "0.0.0-dev",
-    "@aicoffe/dmaf-linux-x64": "0.0.0-dev",
-    "@aicoffe/dmaf-win32-x64": "0.0.0-dev"
+    "@aicoffe/dmaf-engine-darwin-arm64": "0.0.0-dev",
+    "@aicoffe/dmaf-engine-darwin-x64": "0.0.0-dev",
+    "@aicoffe/dmaf-engine-linux-arm64": "0.0.0-dev",
+    "@aicoffe/dmaf-engine-linux-x64": "0.0.0-dev",
+    "@aicoffe/dmaf-engine-win32-x64": "0.0.0-dev"
   }
 }

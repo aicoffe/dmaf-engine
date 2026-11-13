@@ -99,7 +99,7 @@ curl -fsSL https://dmaf.aicoffe.com/install.sh | sh
 irm https://dmaf.aicoffe.com/install.ps1 | iex
 
 # npm（全平台）
-npm i -g @aicoffe/dmaf
+npm i -g @aicoffe/dmaf-engine
 ```
 
 下载源缺省走官方 market（自动回退 GitHub），可加 `--source github` / `-Source github` 指定。装完用 `dmaf doctor` 自证。源码构建（`cargo install dmaf-engine`）保留为兜底。

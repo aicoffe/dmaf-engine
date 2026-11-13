@@ -19,7 +19,7 @@ cargo test                             # 191 tests (all offline; incl. i18n cata
 # Engine install (user machines; no repo source needed; rerunning the same command upgrades in place)
 curl -fsSL https://dmaf.aicoffe.com/install.sh | sh   # macOS / Linux (--source github selects the source)
 irm https://dmaf.aicoffe.com/install.ps1 | iex        # Windows PowerShell
-npm i -g @aicoffe/dmaf                                # npm channel (all platforms)
+npm i -g @aicoffe/dmaf-engine                                # npm channel (all platforms)
 
 # One-off project operations (user-repo perspective)
 dmaf new --dir my-project                   # greenfield: scaffold a project skeleton (only template: minimal; embeds the definition skill into dmaf/skills/); install the runnable sample via dmaf add
@@ -72,7 +72,7 @@ Requires the Rust toolchain (rustup 1.85+); the repo ships its own `.cargo/confi
 ├── templates/                 # dmaf new skeleton templates (minimal only; include_dir embedded in the binary)
 ├── tools/                     # definition-skill sources (create-workflow: Q&A + document-driven dual mode; include_dir embedded, dmaf new writes it to the target dmaf/skills/, excluded from package distribution as an engine slot)
 ├── scripts/                   # engine install scripts (install.sh/install.ps1; the official entry is served by the market at the same-named path, protocol in docs-dev/引擎安装与分发实施方案.md §6.3; ps1 must stay pure ASCII — PS5.1 without BOM reads GBK)
-├── npm/                       # npm packaging scaffold (@aicoffe/dmaf main-package shim + platform-package assembly and release pipeline, see npm/README.md)
+├── npm/                       # npm packaging scaffold (@aicoffe/dmaf-engine main-package shim + platform-package assembly and release pipeline, see npm/README.md)
 ├── .github/workflows/         # CI (ci.yml: build/test/compile --check) + release.yml (dist generation, tag-triggered five-platform artifacts)
 ├── .dmaf/                     # ★ Runtime layer (gitignored): engine-exclusive zone, <timestamp>/ session dirs
 ├── docs/                      # user docs (English default: engine-manual / flow-definition-guide / phase-stage-scope + schemas/; Chinese under docs/zh/; flow-definition-guide embedded via include_str, dmaf new writes it into the user project's dmaf/docs/)
