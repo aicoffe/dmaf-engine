@@ -108,6 +108,9 @@ fn system_locale_subtag() -> Option<String> {
 }
 
 /// POSIX locale 值解析：`"en_US.UTF-8"` → `Some("en")`；`"C"` / `"POSIX"` / 空 → None。
+/// 生产调用方仅 `#[cfg(unix)]` 的 [`system_locale_subtag`]；`test` 门保留测试模块
+/// 在 Windows 上的复用（`detect_by`）。
+#[cfg(any(unix, test))]
 fn parse_posix_locale(s: &str) -> Option<String> {
     let lang = s.split(['_', '.', '@']).next().unwrap_or("");
     match lang.to_ascii_lowercase().as_str() {

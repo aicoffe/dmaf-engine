@@ -1669,19 +1669,6 @@ fn fail_from_market(e: Fail) -> crate::package::PackageError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::package::MergeOptions;
-
-    fn opts() -> MergeOptions {
-        MergeOptions {
-            check_only: false,
-            chain_install: false,
-            source_label: "test".into(),
-            tag: None,
-            digest: None,
-            command: "add",
-            force: false,
-        }
-    }
 
     #[test]
     fn token_format_precheck() {

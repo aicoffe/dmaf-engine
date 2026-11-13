@@ -28,5 +28,6 @@ docs-dev
 .zcode/
 
 # other
+out
 .codegraph
 
