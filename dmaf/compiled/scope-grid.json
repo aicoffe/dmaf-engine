@@ -1,0 +1,108 @@
+{
+  "scopes": {
+    "sdlc-bugfix": {
+      "completion_template": "The \"{vars.topic}\" bugfix flow is complete.\n\nDefect intent: {outputs.intent-capture}\nFix requirements: {outputs.spec-generation}\nPlan and tasks: {outputs.plan-generation}, {outputs.task-breakdown}\nImplementation and delivery: {outputs.atomic-execution}, {outputs.system-testing}, {outputs.pr-preparation}\n",
+      "constants": {},
+      "depends": {
+        "atomic-execution": [
+          "task-breakdown"
+        ],
+        "plan-generation": [
+          "spec-generation"
+        ],
+        "pr-preparation": [
+          "atomic-execution",
+          "plan-generation",
+          "system-testing",
+          "task-breakdown"
+        ],
+        "spec-generation": [
+          "intent-capture"
+        ],
+        "system-testing": [
+          "atomic-execution"
+        ],
+        "task-breakdown": [
+          "plan-generation"
+        ]
+      },
+      "description": "AI-native SDLC bugfix flow: defect reports (ticket/alert/incident) taken in as intent → fix requirements (Spec) → plan → tasks → TDD execution → regression system testing → PR",
+      "stages": [
+        "intent-capture",
+        "spec-generation",
+        "plan-generation",
+        "task-breakdown",
+        "atomic-execution",
+        "system-testing",
+        "pr-preparation"
+      ],
+      "vars": {
+        "topic": null
+      }
+    },
+    "sdlc-standard": {
+      "completion_template": "The \"{vars.topic}\" SDLC flow is complete.\n\nRequirements: {outputs.spec-generation}\nDesign (adjudication and finalization): {outputs.conflict-resolution}\nPlan and tasks: {outputs.plan-generation}, {outputs.task-breakdown}\nImplementation and delivery: {outputs.atomic-execution}, {outputs.system-testing}, {outputs.pr-preparation}\n",
+      "constants": {},
+      "depends": {
+        "architecture-analysis": [
+          "spec-generation"
+        ],
+        "atomic-execution": [
+          "task-breakdown"
+        ],
+        "conflict-resolution": [
+          "detailed-design",
+          "spec-generation"
+        ],
+        "detailed-design": [
+          "architecture-analysis",
+          "spec-generation"
+        ],
+        "hifi-ue": [
+          "spec-generation"
+        ],
+        "hld-design": [
+          "architecture-analysis",
+          "spec-generation"
+        ],
+        "plan-generation": [
+          "spec-generation"
+        ],
+        "pr-preparation": [
+          "atomic-execution",
+          "plan-generation",
+          "system-testing",
+          "task-breakdown"
+        ],
+        "spec-generation": [
+          "intent-capture"
+        ],
+        "system-testing": [
+          "atomic-execution"
+        ],
+        "task-breakdown": [
+          "plan-generation"
+        ]
+      },
+      "description": "AI-native SDLC standard flow: concept (intent) → requirements (Spec) → design (high-fidelity UE / architecture judgment / hld / detailed design / conflict resolution / finalization) → development (Plan → tasks → TDD execution → system testing → PR)",
+      "stages": [
+        "intent-capture",
+        "spec-generation",
+        "hifi-ue",
+        "architecture-analysis",
+        "hld-design",
+        "detailed-design",
+        "conflict-resolution",
+        "plan-generation",
+        "task-breakdown",
+        "atomic-execution",
+        "system-testing",
+        "pr-preparation"
+      ],
+      "vars": {
+        "topic": null
+      }
+    }
+  },
+  "version": 5
+}

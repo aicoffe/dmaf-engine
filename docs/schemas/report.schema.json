@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DMAF Report",
+  "description": "Orchestrator 回报给 Engine 的报告（action 或 approval 二选一）",
+  "oneOf": [
+    {
+      "title": "ActionReport",
+      "type": "object",
+      "required": ["action_id", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "action"},
+        "action_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["success", "failed", "skipped"]},
+        "summary": {"type": ["string", "null"]},
+        "error_message": {"type": ["string", "null"]},
+        "reason": {"type": ["string", "null"], "description": "status 为 skipped 时必须为非空字符串：判定不适用的原因"},
+        "agent_outputs": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    {
+      "title": "ApprovalReport",
+      "type": "object",
+      "required": ["kind", "gate", "decision"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"const": "approval"},
+        "gate": {"type": "string", "minLength": 1},
+        "decision": {"enum": ["granted", "rejected"]},
+        "note": {"type": ["string", "null"]}
+      }
+    }
+  ]
+}

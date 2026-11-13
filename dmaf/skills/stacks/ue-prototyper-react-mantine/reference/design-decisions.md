@@ -1,0 +1,95 @@
+# Design decisions and quality floors (the app's visual authority, the user's direction, built-in fallbacks)
+
+The prototype's visual authority is the product itself. This file governs design questions the app has no ready answer for: the authority order, when a new visual direction may enter, the built-in floor rules, and the pre-delivery checklist. **Verify before acting on any design decision — never by feel.**
+
+## 1. Authority order (never inverted)
+
+1. **The app's real design system** — Mantine component defaults, the `createTheme` theme and CSS variables, the layout shell, existing pages' composition patterns. When the product has an answer, the prototype uses it, no exceptions — this is the precondition for review conclusions to transfer to production.
+2. **The user's explicit direction** — "go dark", "align with marketing's style". An explicit direction overrides defaults but **never overrides authority 1's mechanism**: new colors / radii must enter the theme first (`createTheme` tokens / `defaultRadius` / component `defaultProps`); scattered hardcoding is not allowed; record `designDirection` in ue-spec and leave a manifest trace of "which external design intelligence was consulted and what was adopted".
+3. **Built-in floor rules** (§3) — for the parts neither the app nor the user answered.
+
+Three default knobs (when the user does not say otherwise): **density follows the app** (an enterprise admin console keeps its compact scale; no marketing-page whitespace aesthetics), **restrained motion** (micro-interactions 150–300ms; no scroll choreography or gimmicky layouts), **no gimmicky layout** (no style experiments like Brutalism / glassmorphism — the prototype answers functional questions).
+
+## 2. Verification discipline (semantic results first)
+
+- One question per lookup: first the semantic result (e.g. "where form validation error messages appear"), then the component implementation (the official docs of the matching Mantine component); if both come up empty, retry once with a narrowed rewrite; if still nothing, say plainly "no authoritative answer found" and offer a fallback labeled as general advice — **never present unverified content as authoritative**.
+- Verification entry point: the Mantine official docs (`https://mantine.dev/llms.txt` index; component pages available as single `.md` files; offline, read the node_modules type declarations).
+- Dataset / retrieval design intelligence (e.g. a ui-ux-pro-max-like skill installed in the user's environment) is consulted in only two scenarios: greenfield whole-shell needs a visual direction defined from scratch; the user explicitly asks to explore a new visual. Adopted values always land through the theme mechanism.
+
+## 3. Built-in floor rules (the minimum when neither the app nor the user answered)
+
+**Spacing and rhythm**
+
+- 4/8px spacing system (aligned to the Mantine `--mantine-spacing-*` scale); hierarchy steps 8/16/24/32/48 — one spacing per hierarchy level.
+- One content-width policy per page type: tables fill (fluid inside AppShell), forms cap around 640–720px; no arbitrary per-screen widths.
+- Body line length 65–75 characters (about `max-width: 40em`); line-height 1.5–1.75 (Mantine's default `lineHeight` is this scale); body text minimum 14px (desktop admin; 16px on mobile).
+
+**Color and contrast**
+
+- Body contrast ≥ 4.5:1, large text / UI boundaries / meaningful icons ≥ 3:1 — measured against the **composited background** (also test overlays and under scrims, not just the flat page).
+- Color is never the only state signal — pair it with an icon / text / weight.
+- If the app has a dark theme (`primaryShift` / dark scheme), prototype pages must hold up in both themes: borders / dividers visible in both, interactive states (hover / pressed / disabled) distinguishable in both, Modal scrim opacity measured on the composited result; if the app has no dark theme, do not invent one.
+- Light/dark screenshot reviews follow the stack skill's dual light-dark baseline awareness (the review package reminds the reviewer to toggle the theme once through).
+
+**Icon discipline**
+
+- No emoji as structural icons; icons come from the app's existing set (greenfield standardizes on `@tabler/icons-react` — Mantine's documented companion set; brownfield keeps the project's icon library), one set across the project.
+- Uniform stroke width within one visual layer (`stroke={1.5}` or `2`), uniform size steps (e.g. 16/20/24); no mixing filled and outline styles within one hierarchy.
+- Meaningful standalone icons get `aria-label` or a text alternative; decorative icons accompanying visible text get `aria-hidden="true"`.
+
+**Motion**
+
+- Micro-interaction durations 150–300ms with one scale across the site (do not reuse a single duration for every transition); exits are faster than entrances.
+- Motion only signals state changes (hover / expand / feedback landing); purely decorative animation is forbidden; support `prefers-reduced-motion` (branch on `@mantine/hooks`' `useReducedMotion`).
+- Feedback duration matches the feedback channel: light toasts go through `notifications.show` (`autoClose` set explicitly, success toasts aligned to the 2-second scale — the library default is 4000ms); animation never substitutes for feedback.
+
+**Form UX**
+
+- Labels always visible (`withAsterisk` marks required, `label` always given); never rely on a placeholder as the label.
+- Validation timing matches interaction: validate single fields on blur (`form.validateField` in `onBlur`), full `form.validate()` on submit; errors sit below the field (`getInputProps`' built-in feedback path), and long complex forms focus the first errored field after a failed submit (locate via `[data-invalid]`).
+- Common fields carry `autocomplete` attributes (name / tel / email); the form mode follows the stack skill's `mode: 'uncontrolled'`.
+- Submit button `loading` → success (`notifications.show` success) / failure (error below the field + retryable) full-chain feedback; double submits are forbidden during validation and submission.
+- Edit scenarios prevent redundant entry: `form.setInitialValues(record)` + `form.reset()` backfill existing values — never retype from zero.
+
+**Content realism (paired with mock volume realism)**
+
+- Thousand separators on numbers, currency and precision on amounts, localized date formats or relative time — mock data follows the same rules (handler rules in reference/fence-mocks.md).
+- Truncation has an escape: ellipsis + Tooltip or expansion on the detail page, with the full text reachable by keyboard / screen reader; only unpredictable-length values (usernames, titles) get nowrap + truncation; fixed-structure text is never truncated.
+- Empty-state copy distinguishes "no data" from "no results for this filter" (the latter gets a clear-filters action); placeholder data uses realistic business samples (real copy in the product's language, no lorem / test123).
+- Pages are the product's final cut: present only the product content the end user will see; review comments, decision notes, to-be-confirmed markers, and other discussion content must not enter the page DOM (they live in the review layer and the ue-spec / feedback exports) — notes for reviewers go in the review package, not on the page.
+
+**Page composition defaults (when no existing page can be referenced)**
+
+- Lists over cards, cards over freeform layout — an enterprise review audience reads tables fastest.
+- One primary action per view (top right of the page or a bottom action bar, following the app's conventions); destructive actions separated + `openConfirmModal` double-confirm.
+- Filters above the list; counts / aggregates near the list header; pagination at the bottom in `Pagination` — copy the nearest existing page first for all of it.
+- Density follows the app (enterprise admin compact scale).
+
+**Accessibility floors**
+
+- Interactive elements keyboard-reachable with visible focus (focus returns when an overlay closes); Modal / Drawer focus trapping (built into Mantine — do not bypass with `trapFocus={false}`).
+- Click targets ≥ 40px (44px for touch); icon buttons must have an accessible name (`aria-label`).
+- Heading levels do not skip (`h1 → h2`); form fields bound to labels, errors announced by screen readers (prefer the component library's built-in path).
+- Popovers / sticky elements never cover keyboard focus.
+
+**Honest prototype UI**
+
+- An always-on PROTOTYPE banner (mode, page id, review link — clicking appends `?uer=1` to the current URL, mock-channel badge) — loud enough that a screenshot cannot pass for the product, without disrupting review.
+- Feedback channels and the three loading layers (`Skeleton` first paint / button `loading` / `LoadingOverlay` blocks) all use the component library's ready-made parts — no homemade spinners / toasts.
+
+## 4. Token discipline (three layers, each in its place)
+
+- **Consumption layer**: no bare colors / radii / font sizes in business components — theme values come through `getThemeColor()` / CSS variables (`--mantine-color-*`, `--mantine-spacing-*`, `--mantine-radius-*`); component visual customization goes through `variant` / `color` / `c` props and `data-*` attributes + CSS Modules (stack-skill red line, no emotion back-references).
+- **New-value layer**: new colors / radii from the user's explicit direction enter the theme first (`createTheme` colors ramp / `defaultRadius` / component `defaultProps`) before being referenced — new values join the mechanism, never scattered points.
+- **Temporary self-build layer**: rung-3 components consume only the consumption and new-value layers; all style values come from theme CSS variables + CSS Modules; registered in `gaps.md`.
+
+## 5. Pre-delivery visual and accessibility checklist (the fine print of the Step 4 gate)
+
+- [ ] Icons: no emoji structural icons; one style per layer; meaningful icons contrast ≥ 3:1; standalone icons have accessible names
+- [ ] Contrast: body ≥ 4.5:1, boundaries ≥ 3:1, passing in both light and dark themes (not inferred)
+- [ ] Focus: keyboard-walk the main flow once; focus visible, returned after overlays close, never covered
+- [ ] States: color never the only signal (disabled / selected / error all carry a second signal)
+- [ ] Motion: one 150–300ms scale; `prefers-reduced-motion` does not break usability
+- [ ] Content: thousand separators / localized dates / truncation has an escape / empty states distinguish the two semantics
+- [ ] Tokens: no bare colors / radii (CSS variables / `getThemeColor` coverage); new values already in `createTheme`
+- [ ] Composition: one primary action, destructive separated with confirmation, density follows the app

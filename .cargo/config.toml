@@ -1,0 +1,11 @@
+# This project overrides the global cargo source config: the globally-configured
+# USTC git index is discontinued (404); switched to its sparse-protocol index.
+# The user's global config is left untouched.
+[source.crates-io]
+replace-with = 'ustc-sparse'
+
+[source.ustc-sparse]
+registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"
+
+[http]
+check-revoke = false

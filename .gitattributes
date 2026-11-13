@@ -1,0 +1,20 @@
+# Single authority for line endings (2026-11-10 root fix for two classes of line-ending problems:
+# Linux server pulls interrupted by local line-ending differences, and Windows autocrlf checking out CRLF
+# causing gofmt artifacts and false test failures):
+# All text files are stored with unified LF and always checked out as LF (including Windows workspaces) —
+# line endings no longer depend on per-platform core.autocrlf settings, and checkout results are byte-identical
+# across platforms; pair with `git add --renormalize .` to renormalize existing content.
+* text=auto eol=lf
+
+# Explicit binary exemptions (prevent text=auto from misclassifying files and injecting line-ending conversions)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.pem binary
+*.zip binary
+*.tar.gz binary

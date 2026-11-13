@@ -1,0 +1,7 @@
+# Workflow package manifest: identity and compatibility declaration (dmaf doctor reads it
+# to check binary compatibility; dmaf add/push/publish share this file).
+name: my-workflow        # Package name; publishing convention: agent/skill/scope names are prefixed with the package name
+version: 0.1.0
+description: One-line description of this workflow package
+engine: "@ENGINE_RANGE@" # Rendered by dmaf new at write time into the compatibility band of the running binary; comparators = > >= < <= (MAJOR.MINOR[.PATCH])
+harnesses: [opencode, claude, zcode, cursor, gemini, codex, dsh]    # All harnesses the engine supports (claude alias claude-code, gemini alias gemini-cli); authors may narrow to a verified subset

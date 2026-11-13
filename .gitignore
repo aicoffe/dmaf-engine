@@ -1,0 +1,32 @@
+# Rust build artifacts
+/target/
+
+# dmaf atomic-write temp files (leftovers from interrupted writes: *.tmp-<pid>-<n>)
+*.tmp
+*.tmp-*
+
+# Python (runtime artifacts of scripts under skills/)
+__pycache__/
+*.py[cod]
+
+# Env files (may hold secrets - never commit; .env.example is the template and IS committed)
+.env
+
+# dmaf runtime: engine-exclusive zone (session state & audit) + harness derivatives
+.dmaf/
+.opencode/
+
+# Business artifacts of the courseware sample (session buckets declared via inputs/outputs; committing them is each user project's own call)
+# Courseware-era leftovers (still untracked) plus this repo's dmaf-output demo outputs - both are this repo's self-held policy; the engine never writes these lines into a user project's .gitignore
+dmaf-output/
+
+# User private dirs
+idea
+docs-dev
+
+# ZCode tool state (skill cache, etc.)
+.zcode/
+
+# other
+.codegraph
+

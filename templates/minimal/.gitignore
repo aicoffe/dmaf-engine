@@ -1,0 +1,7 @@
+# Engine-exclusive runtime area (session state & audit) and harness derivatives
+.dmaf/
+.opencode/
+
+__pycache__/
+*.py[cod]
+*.tmp

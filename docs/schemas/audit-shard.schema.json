@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DMAF Audit Shard",
+  "description": "审计分片：状态转换的最小不可变、可独立校验、可原子写入的追加单元",
+  "type": "object",
+  "required": [
+    "shard_id", "workflow_id", "action_id", "stage_id", "seq", "event_type",
+    "prev_shard_hash", "state_before_hash", "state_after_hash", "actor",
+    "payload", "shard_hash", "timestamp"
+  ],
+  "properties": {
+    "shard_id": {"type": "string"},
+    "workflow_id": {"type": "string"},
+    "action_id": {"type": ["string", "null"]},
+    "stage_id": {"type": ["string", "null"]},
+    "seq": {"type": "integer", "minimum": 1},
+    "event_type": {
+      "enum": [
+        "workflow.started", "action.dispatched", "action.reported",
+        "approval.granted", "approval.rejected", "retry.scheduled",
+        "workflow.completed", "workflow.failed", "workflow.cancelled",
+        "workflow.forked"
+      ]
+    },
+    "prev_shard_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "state_before_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "state_after_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "actor": {"type": "string"},
+    "payload": {"type": "object"},
+    "shard_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "timestamp": {"type": "string"}
+  }
+}
