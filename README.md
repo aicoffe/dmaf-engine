@@ -110,23 +110,18 @@ Take **dmaf-sdlc** (sdlc-standard: the AI-native SDLC standard process), develop
 
 ```bash
 # 1. Install the workflow
-dmaf push <target-project-dir>  # deliver the current workflow project to a target project
 dmaf add https://dmaf.aicoffe.com/aicoffe/dmaf-sdlc    # install the workflow into the current project (run inside the target project)
 # Multiple source types are supported; see dmaf -h
 
-# 2. Deploy AI assets to the harness and health-check
-dmaf install                 # push/add already deployed in sequence; rerun after asset changes (--harness auto-detects; specify or use --harness all when several harnesses coexist)
-dmaf doctor --harness opencode   # layout / artifact drift (incl. version compatibility) / manifest engine compatibility / reference completeness / asset drift
-
-# 3. Start a session via the /dmaf skill — no need to memorize dmaf commands
+# 2. Start a session via the /dmaf skill — no need to memorize dmaf commands
 /dmaf add a shopping cart to the existing online mall
 
-# 4. Inspect / operate
+# 3. Inspect / operate
 /dmaf which stage is the current session on
 /dmaf rerun from the design stage
 ```
 
-Daily self-check loop: after `git pull`, run `dmaf doctor --harness <name>` — `would_change` items are synced by rerunning `dmaf install`; `modified` items are targets you changed locally — add `--force` once you confirm overwriting them.
+Daily routine: after modifying workflows/AI assets — rerun `dmaf install` to apply; `modified` items are targets you changed locally — add `--force` once you confirm overwriting them.
 
 ### Track 2: Developing a workflow
 

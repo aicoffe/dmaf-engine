@@ -110,23 +110,18 @@ npm i -g @aicoffe/dmaf-engine
 
 ```bash
 # 1. 安装工作流
-dmaf push <目标工程dir> # 把当前工作流交付到目标工程
 dmaf add https://dmaf.aicoffe.com/aicoffe/dmaf-sdlc    # 安装工作流到当前工程（目标工程中执行）
 # 支持多种源，请dmaf -h了解
 
-# 2. 部署 AI 资产到 harness 并体检
-dmaf install                 # push/add 已自动串联部署；此后资产变更重跑即可（--harness 缺省自动探测，多 harness 共存时指定或 --harness all）
-dmaf doctor --harness opencode   # 布局/产物漂移(含版本兼容)/清单 engine 兼容/引用齐备性/资产漂移
-
-# 3. 启动会话：使用/dmaf skill，无需记忆dmaf命令
+# 2. 启动会话：使用/dmaf skill，无需记忆dmaf命令
 /dmaf 给现有商城加购物车
 
-# 4. 查看/运维
+# 3. 查看/运维
 /dmaf 当前会话跑到哪个阶段了
 /dmaf 从design阶段重跑
 ```
 
-日常自检动线：git pull 后 `dmaf doctor --harness <name>`——`would_change` 重跑 `dmaf install` 即同步；`modified` 为本地修改过的目标，确认覆盖可加 `--force`。
+日常动线：修改工作流/AI资产后——重跑 `dmaf install` 生效；`modified` 为本地修改过的目标，确认覆盖可加 `--force`。
 
 ### 场景二：开发工作流
 
