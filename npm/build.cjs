@@ -80,6 +80,11 @@ for (const [target, meta] of Object.entries(TARGETS)) {
   fs.mkdirSync(path.join(dir, "bin"), { recursive: true });
   fs.copyFileSync(binSrc, path.join(dir, "bin", meta.exe));
   fs.chmodSync(path.join(dir, "bin", meta.exe), 0o755);
+  // the npmjs.com package page renders the README from the published tarball
+  fs.writeFileSync(
+    path.join(dir, "README.md"),
+    `# ${name}\n\nPrebuilt dmaf binary for ${meta.os}/${meta.cpu} (${target}).\nThis package is not meant to be installed directly - it is pulled in as an\noptionalDependency of @aicoffe/dmaf-engine, which resolves it for the running\nplatform and execs bin/${meta.exe}.\n`,
+  );
   fs.rmSync(extractDir, { recursive: true, force: true });
 
   const manifest = {
