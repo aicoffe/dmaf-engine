@@ -31,6 +31,12 @@ on:
         required: true
         type: string
 
+# workflow-level declaration in addition to the job-level one: the called job only
+# receives the id-token grant it declares (bounded by the caller's grant)
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -91,6 +97,18 @@ jobs:
       - name: Assemble platform packages
         run: node npm/build.cjs "$VERSION" target/distrib
 
+      - name: OIDC probe (diagnostic)
+        run: |
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::warning::ACTIONS_ID_TOKEN_* not injected - this job does not hold id-token: write; trusted publishing cannot engage"
+            exit 0
+          fi
+          echo "id-token grant present; claims the npm registry will validate (must match the Trusted Publisher config on npmjs.com):"
+          curl -sS -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=npm" \
+          | jq -r .value \
+          | python3 -c "import sys,json,base64; p=sys.stdin.read().strip().split('.')[1]; p+='='*(-len(p)%4); d=json.loads(base64.urlsafe_b64decode(p)); print(json.dumps({k:d.get(k) for k in ('iss','aud','repository','workflow','job_workflow_ref','ref','environment','actor')}, indent=2))"
+
       - name: Publish (platform packages first, main package last)
         run: |
           npm --version   # trusted publishing needs npm >= 11.5.1
@@ -98,7 +116,7 @@ jobs:
           # ${NODE_AUTH_TOKEN}) so a stray token cannot shadow the OIDC path - npm rejects
           # bypass-2FA tokens for direct publishing with a bare 404 on PUT
           if [ -n "$NPM_CONFIG_USERCONFIG" ] && [ -f "$NPM_CONFIG_USERCONFIG" ]; then
-            sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
+            sed -i -e '/_authToken/d' -e '/always-auth/d' "$NPM_CONFIG_USERCONFIG"
           fi
           publish() {
             dir=$1
@@ -108,7 +126,12 @@ jobs:
               echo "already published: $name@$ver (rerun-safe skip)"
               return 0
             fi
-            (cd "$dir" && npm publish --access public)
+            (cd "$dir" && npm publish --access public) || {
+              echo "::error::npm publish failed for $name@$ver"
+              log=$(ls -t "$HOME"/.npm/_logs/*-debug-0.log 2>/dev/null | head -1)
+              [ -n "$log" ] && tail -n 60 "$log" || true
+              exit 1
+            }
           }
           for d in npm/pkg/*/; do publish "$d"; done
           publish npm/dmaf-engine
