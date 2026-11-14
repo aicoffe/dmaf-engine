@@ -1,30 +1,74 @@
-# npm 包装（@aicoffe/dmaf-engine）
+# npm packaging (@aicoffe/dmaf-engine)
 
-引擎二进制的 npm 分发通道。设计见 `docs-dev/引擎安装与分发实施方案.md` §6.5（D6 拍板：**esbuild 多包模式**——二进制随平台包预置分发、安装期零下载；明确不用 dist 自带的 npm 生成器，其形态是安装期运行时下载 `binary-install.js`）。
+npm distribution channel for the engine binary. The main package ships a `bin/dmaf.js`
+shim; platform binaries are prebuilt and delivered through `optionalDependencies` —
+npm skips non-matching platforms via each platform package's `os`/`cpu` fields, so
+there is zero download at install time.
 
-## 形态
+## Package layout
 
-- 主包 `@aicoffe/dmaf-engine`：`bin/dmaf.js` shim 按当前平台解析平台包内二进制并 exec；平台二进制声明在 `optionalDependencies`（npm 按 `os`/`cpu` 字段自动跳过不匹配平台）。
-- 平台包 `@aicoffe/dmaf-engine-{win32-x64, darwin-arm64, darwin-x64, linux-x64, linux-arm64}`：各含单文件二进制于 `bin/`；linux 侧直接复用 musl 静态二进制（glibc 系统可用，无需双份）。
-- `npm i -g @aicoffe/dmaf-engine` 落 npm 全局 bin（npm 安装时已入 PATH），零 PATH 操作。
+- Main package `@aicoffe/dmaf-engine`: `bin/dmaf.js` resolves the platform package for
+  the running platform and execs its binary; all five platform packages are declared in
+  `optionalDependencies` (strict same-version discipline).
+- Platform packages `@aicoffe/dmaf-engine-{win32-x64, darwin-arm64, darwin-x64, linux-x64, linux-arm64}`:
+  one binary under `bin/` plus `os`/`cpu` fields; the linux side reuses the musl static
+  binary (usable on glibc systems, no dual build).
+- `npm i -g @aicoffe/dmaf-engine` lands on the npm global bin (already on PATH) —
+  no PATH handling.
 
-## 发布动线（每次发版）
+## Version placeholder
 
-1. 前置（一次性）：创建 npm org `aicoffe`（D8 核查 scope 未被注册）；CI token 或 2FA 就绪。
-2. tag 触发 release workflow 产出五平台产物到 `target/distrib/`（GitHub Release 同时托管）。
-3. 装配：`node npm/build.cjs <版本>` —— 从 `target/distrib/` 复制二进制、生成 `npm/pkg/<平台>/` 平台包、统一改写主包与依赖版本（**严格同版纪律**）。
-4. 发布（顺序：平台包先、主包后）：
-   ```bash
-   for d in npm/pkg/*/; do (cd "$d" && npm publish --access public); done
-   cd npm/dmaf-engine && npm publish --access public
-   ```
-5. 发布后自检（M1-6 端到端验证）：干净目录 `npm i -g @aicoffe/dmaf-engine` → `dmaf --version` → `dmaf doctor`。
-6. 国内可达：npmmirror 对新包自动同步（首次可手动触发 sync）。
+The committed `npm/dmaf-engine/package.json` always stays at `0.0.0-dev` (version and
+optionalDependencies). Release versions exist only in build outputs: `build.cjs`
+rewrites them to the release version at pack time, and nothing is committed back — the
+repo never tracks release numbers, avoiding drift against the engine's `Cargo.toml`.
+Never publish the main package without running `build.cjs` first.
 
-## 版本占位
+## Assembly (standalone)
 
-仓库内 `npm/dmaf-engine/package.json` 版本恒为 `0.0.0-dev`，发布前由 `build.mjs` 按实际版本改写——仓库不跟踪发版号，避免与引擎 `Cargo.toml` 版本漂移。
+```bash
+node npm/build.cjs <version> [distrib-dir]   # default distrib dir: target/distrib
+```
 
-## 自动化边界
+Reads the five dist archives from the distrib dir, assembles `npm/pkg/<slug>/`
+platform packages, and rewrites the main package's version + optionalDependencies to
+`<version>` (ephemeral in the working tree, not committed).
 
-发布动作（步骤 4-5）当前为手工执行（需 npm 凭据）；并入 release workflow 自动化属 M2 范围（方案 §7 M2-3 收尾项）。
+## Release automation
+
+A tag push `vX.Y.Z` runs `.github/workflows/release.yml`; its dist-generated
+`custom-npm-publish` job invokes `.github/workflows/npm-publish.yml`, which:
+
+1. downloads the five release assets + `sha256.sum` and verifies checksums (fail closed);
+2. assembles via `build.cjs` with the version taken from the tag;
+3. publishes platform packages first, then the main package — `npm view` prechecks make
+   reruns safe, and dist skips the whole job for prereleases;
+4. runs the installed-binary gate: `npm i -g @aicoffe/dmaf-engine@<version>` →
+   `dmaf --version` → `dmaf compile --check` against the checked-out sample repo →
+   `dmaf new` scaffold check.
+
+Auth is tokenless OIDC trusted publishing: all six packages have Trusted Publishers
+configured on npmjs.com (org/user + repository + workflow filename `npm-publish.yml`),
+so publishing needs no secret. If a Trusted Publisher was configured with an
+environment name, the publish job must declare the same `environment:`. Manual/local
+publishing is not possible under trusted publishing (OIDC works only from the
+configured CI); emergency fallback is token auth: re-add
+`env: NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` to the publish step.
+
+## dist template hand-fixes
+
+The dist 0.34 generator emits two defects into the generated `custom-npm-publish` job;
+both are hand-fixed in the committed `release.yml` and must be re-applied after every
+`dist generate` (enforced by the template guard in ci.yml):
+
+1. the job's `uses: $/...` line must read `./...`;
+2. `"contents": "read"` must be present in the job-level `permissions:` — job-level
+   permissions replace the top-level block, and without it checkout and `gh` fail with 403.
+
+## After publishing
+
+npmmirror picks up new versions automatically (a first sync may need a manual trigger).
+Post-publish sanity in a clean environment: `npm i -g @aicoffe/dmaf-engine` →
+`dmaf --version` → `dmaf doctor`.
+
+Design record: `docs-dev/引擎安装与分发实施方案.md` §6.5/§6.5.1 (internal archive, not committed).

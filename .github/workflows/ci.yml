@@ -11,6 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # dist 0.34 emits two defects into the generated custom-npm-publish job; both are
+      # hand-fixed in the committed file and must be re-applied after every `dist generate`
+      # (see Cargo.toml [workspace.metadata.dist] comment)
+      - name: Release workflow template guard
+        run: |
+          if grep -q 'uses: \$/' .github/workflows/release.yml; then
+            echo "::error::release.yml has the dist 0.34 'uses: \$/' template bug - fix the line to './.github/workflows/npm-publish.yml'"
+            exit 1
+          fi
+          if ! grep -A16 '^  custom-npm-publish:' .github/workflows/release.yml | grep -q '"contents": "read"'; then
+            echo "::error::custom-npm-publish job lost 'contents: read' in permissions - checkout/gh would fail with 403"
+            exit 1
+          fi
+
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2

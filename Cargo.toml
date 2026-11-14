@@ -60,3 +60,7 @@ cargo-dist-version = "0.34.0"
 install-path = "~/.local/bin/"
 # Whether to install an updater program
 install-updater = false
+# npm channel publishing (D6 esbuild multi-package shape, assembled by npm/build.cjs; see docs-dev plan section 6.5)
+# custom publish job -> invokes .github/workflows/npm-publish.yml; prereleases are skipped by dist
+# NOTE: after every `dist generate`, fix the template bug in the generated job: `uses: $/...` must read `./...` (guarded in ci.yml)
+publish-jobs = ["./npm-publish"]

@@ -1,0 +1,109 @@
+# npm channel publishing, invoked by release.yml as a dist custom publish job
+# (wired via `publish-jobs = ["./npm-publish"]` in Cargo.toml [workspace.metadata.dist]).
+# dist skips the calling job for prereleases; announce gates on this workflow's success.
+# Design: docs-dev plan section 6.5 (D6 esbuild multi-package: platform binaries shipped
+# via optionalDependencies, zero download at install time; strict same-version discipline).
+#
+# Pipeline: release assets -> sha256 fail-closed gate -> npm/build.cjs assembly ->
+# platform packages first, main package last (rerun-safe: EPUBLISHCONFLICT tolerated
+# via existence precheck) -> installed-binary gate (the checked-out sample repo acts
+# as the fixture: `dmaf compile --check` exercises parsing + byte-determinism).
+#
+# Auth: tokenless OIDC trusted publishing — all six packages have Trusted Publishers
+# configured on npmjs.com (org/user + repo + this workflow filename); `id-token: write`
+# is granted by the calling job in release.yml, and provenance is generated
+# automatically (no --provenance flag needed). Requires npm >= 11.5.1 (node 24).
+# Emergency fallback: re-add `env: NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` to the
+# publish step to switch back to token auth (granular token on @aicoffe/dmaf-engine*).
+# NOTE: if a Trusted Publisher was configured with an environment name on npmjs.com,
+# the publish job must declare the same `environment:` or the OIDC claim won't match.
+#
+# Hand-fix reminder: the dist 0.34 template emits two defects into the calling job
+# that must be re-applied after every `dist generate` (guarded in ci.yml):
+#   1. `uses: $/...` must read `./...`
+#   2. `contents: read` must be added to the job permissions (checkout/gh fail with 403 otherwise)
+name: npm-publish
+
+on:
+  workflow_call:
+    inputs:
+      plan:
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REF_NAME: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Resolve version from release tag
+        run: |
+          case "$REF_NAME" in
+            v[0-9]*.[0-9]*.[0-9]*) VERSION="${REF_NAME#v}" ;;
+            *)
+              echo "::error::unexpected ref '$REF_NAME' — npm publish runs on vX.Y.Z tags only"
+              exit 1
+              ;;
+          esac
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Download release assets
+        run: |
+          mkdir -p target/distrib
+          gh release download "$REF_NAME" --dir target/distrib --clobber \
+            --pattern 'dmaf-engine-*.tar.xz' \
+            --pattern 'dmaf-engine-*.zip' \
+            --pattern 'sha256.sum'
+
+      - name: Verify checksums (fail closed)
+        run: |
+          cd target/distrib
+          ls | grep -v '^sha256\.sum$' > wanted-files.txt
+          grep -Ff wanted-files.txt sha256.sum > wanted.sum
+          files=$(wc -l < wanted-files.txt)
+          lines=$(wc -l < wanted.sum)
+          if [ "$files" -ne "$lines" ]; then
+            echo "::error::checksum coverage mismatch: $files assets downloaded, $lines sha256.sum lines matched"
+            exit 1
+          fi
+          sha256sum -c wanted.sum
+
+      - name: Assemble platform packages
+        run: node npm/build.cjs "$VERSION" target/distrib
+
+      - name: Publish (platform packages first, main package last)
+        run: |
+          publish() {
+            dir=$1
+            name=$(jq -r .name "$dir/package.json")
+            ver=$(jq -r .version "$dir/package.json")
+            if npm view "$name@$ver" version >/dev/null 2>&1; then
+              echo "already published: $name@$ver (rerun-safe skip)"
+              return 0
+            fi
+            (cd "$dir" && npm publish --access public)
+          }
+          for d in npm/pkg/*/; do publish "$d"; done
+          publish npm/dmaf-engine
+
+      - name: Installed-binary gate
+        run: |
+          npm i -g "@aicoffe/dmaf-engine@$VERSION"
+          dmaf --version
+          # the checked-out sample repo is the fixture: the installed binary must parse
+          # the full definition layer and reproduce the committed artifacts byte-for-byte
+          dmaf compile --check
+          # scaffolding path of the installed binary (`new` prints ok:true on success)
+          dmaf new --dir "$RUNNER_TEMP/smoke" | jq -e '.ok == true' >/dev/null
