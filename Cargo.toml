@@ -1,6 +1,6 @@
 [package]
 name = "dmaf-engine"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 description = "D-MAF deterministic multi-agent routing engine (Rust implementation)"
 license = "MIT OR Apache-2.0"
