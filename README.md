@@ -93,10 +93,10 @@ One line per platform; re-running the same command upgrades in place:
 
 ```bash
 # macOS / Linux
-curl -fsSL https://dmaf.aicoffe.com/install.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/aicoffe/dmaf-engine/releases/latest/download/dmaf-engine-installer.sh | sh
 
 # Windows PowerShell
-irm https://dmaf.aicoffe.com/install.ps1 | iex
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/aicoffe/dmaf-engine/releases/latest/download/dmaf-engine-installer.ps1 | iex"
 
 # npm (all platforms)
 npm i -g @aicoffe/dmaf-engine
