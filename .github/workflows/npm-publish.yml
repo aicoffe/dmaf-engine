@@ -87,6 +87,12 @@ jobs:
 
       - name: Publish (platform packages first, main package last)
         run: |
+          # trusted publishing only: strip the _authToken line setup-node wrote (it expands
+          # ${NODE_AUTH_TOKEN}) so a stray token cannot shadow the OIDC path - npm rejects
+          # bypass-2FA tokens for direct publishing with a bare 404 on PUT
+          if [ -n "$NPM_CONFIG_USERCONFIG" ] && [ -f "$NPM_CONFIG_USERCONFIG" ]; then
+            sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
+          fi
           publish() {
             dir=$1
             name=$(jq -r .name "$dir/package.json")
