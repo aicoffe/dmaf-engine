@@ -138,6 +138,17 @@ jobs:
 
       - name: Installed-binary gate
         run: |
+          # the publish step finishes before the registry CDN serves the new packument
+          # (cache ~60s) - poll until the version is visible, then install
+          for i in $(seq 1 12); do
+            npm view "@aicoffe/dmaf-engine@$VERSION" version >/dev/null 2>&1 && break
+            if [ "$i" = 12 ]; then
+              echo "::error::@aicoffe/dmaf-engine@$VERSION still not visible on the registry after 2 minutes"
+              exit 1
+            fi
+            echo "waiting for the registry to serve $VERSION ($i/12)"
+            sleep 10
+          done
           npm i -g "@aicoffe/dmaf-engine@$VERSION"
           dmaf --version
           # the checked-out sample repo is the fixture: the installed binary must parse
