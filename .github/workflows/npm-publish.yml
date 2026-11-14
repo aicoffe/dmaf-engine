@@ -70,15 +70,17 @@ jobs:
       - name: Verify checksums (fail closed)
         run: |
           cd target/distrib
-          ls | grep -v '^sha256\.sum$' > wanted-files.txt
-          grep -Ff wanted-files.txt sha256.sum > wanted.sum
-          files=$(wc -l < wanted-files.txt)
-          lines=$(wc -l < wanted.sum)
+          # temp files must live outside the scanned dir: the `> file` redirection is set
+          # up before `ls` runs, so a temp file created here lists itself and poisons the count
+          ls | grep -v '^sha256\.sum$' > "$RUNNER_TEMP/wanted-files.txt"
+          grep -Ff "$RUNNER_TEMP/wanted-files.txt" sha256.sum > "$RUNNER_TEMP/wanted.sum"
+          files=$(wc -l < "$RUNNER_TEMP/wanted-files.txt")
+          lines=$(wc -l < "$RUNNER_TEMP/wanted.sum")
           if [ "$files" -ne "$lines" ]; then
             echo "::error::checksum coverage mismatch: $files assets downloaded, $lines sha256.sum lines matched"
             exit 1
           fi
-          sha256sum -c wanted.sum
+          sha256sum -c "$RUNNER_TEMP/wanted.sum"
 
       - name: Assemble platform packages
         run: node npm/build.cjs "$VERSION" target/distrib
