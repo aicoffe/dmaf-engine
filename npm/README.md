@@ -48,17 +48,21 @@ A tag push `vX.Y.Z` runs `.github/workflows/release.yml`; its dist-generated
    `dmaf new` scaffold check.
 
 Auth is tokenless OIDC trusted publishing: all six packages have Trusted Publishers
-configured on npmjs.com (org/user + repository + workflow filename `npm-publish.yml`),
-so publishing needs no secret. `id-token: write` is granted by the calling job in
-`release.yml` and must be **re-declared on the publish job itself** — a reusable
-workflow job without an explicit `permissions:` block never receives the id-token grant
-(no `ACTIONS_ID_TOKEN_*` injection, npm fails with ENEEDAUTH). The publish step also
-strips the `_authToken` line setup-node wrote, so no stray token can shadow OIDC (npm
-now rejects bypass-2FA tokens for direct publishing with a bare 404 on PUT). If a
-Trusted Publisher was configured with an environment name, the publish job must declare
-the same `environment:`. Manual/local publishing is not possible under trusted
-publishing (OIDC works only from the configured CI); emergency fallback is token auth:
-re-add `env: NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` to the publish step.
+configured on npmjs.com with **workflow filename `release.yml`** (the top-level
+triggered workflow — GitHub's OIDC `workflow` claim names the caller, not the reusable
+callee) plus org/user `aicoffe` and repository `dmaf-engine`; publishing needs no
+secret. `id-token: write` is granted by the calling job in `release.yml` and must be
+**re-declared on the publish job itself** — a reusable workflow job without an explicit
+`permissions:` block never receives the id-token grant (no `ACTIONS_ID_TOKEN_*`
+injection, npm fails with ENEEDAUTH). The publish step also strips the `_authToken`
+line setup-node wrote, so no stray token can shadow OIDC (npm now rejects bypass-2FA
+tokens for direct publishing with a bare 404 on PUT). The installed-binary gate polls
+the registry for up to two minutes before installing: npm's packument CDN (~60s cache)
+may still serve pre-publish metadata right after a publish (ETARGET). If a Trusted
+Publisher was configured with an environment name, the publish job must declare the
+same `environment:`. Manual/local publishing is not possible under trusted publishing
+(OIDC works only from the configured CI); emergency fallback is token auth: re-add
+`env: NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` to the publish step.
 
 ## dist template hand-fixes
 
