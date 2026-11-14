@@ -62,5 +62,12 @@ install-path = "~/.local/bin/"
 install-updater = false
 # npm channel publishing (D6 esbuild multi-package shape, assembled by npm/build.cjs; see docs-dev plan section 6.5)
 # custom publish job -> invokes .github/workflows/npm-publish.yml; prereleases are skipped by dist
-# NOTE: after every `dist generate`, fix the template bug in the generated job: `uses: $/...` must read `./...` (guarded in ci.yml)
+# NOTE: after every `dist generate`, re-apply the two hand-fixes to the generated job (guarded in ci.yml):
+#   1. `uses: $/...` must read `./...`
+#   2. `"contents": "read"` must be added to the job permissions (checkout/gh would fail with 403)
+# allow-dirty: dist host verifies the committed release.yml against its own regeneration and refuses
+# to run otherwise — the hand-fixes above would always trip that check. Elements are config classes
+# to skip the up-to-date check for (enum: "ci" / "msi"; a plain boolean is rejected by the schema);
+# ci.yml's template guard is the drift enforcement in its place
+allow-dirty = ["ci"]
 publish-jobs = ["./npm-publish"]

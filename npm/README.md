@@ -65,6 +65,12 @@ both are hand-fixed in the committed `release.yml` and must be re-applied after 
 2. `"contents": "read"` must be present in the job-level `permissions:` — job-level
    permissions replace the top-level block, and without it checkout and `gh` fail with 403.
 
+Because of these hand-fixes, `allow-dirty = ["ci"]` is set in `Cargo.toml`
+`[workspace.metadata.dist]`: dist host otherwise verifies the committed `release.yml`
+against its own regeneration and refuses to run, which the hand-fixes would always trip.
+(The value is a list of config classes to skip, enum `"ci"`/`"msi"` — a plain boolean is
+rejected by the schema.) The ci.yml template guard is the drift enforcement in its place.
+
 ## After publishing
 
 npmmirror picks up new versions automatically (a first sync may need a manual trigger).
