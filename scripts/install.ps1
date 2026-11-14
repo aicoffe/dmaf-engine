@@ -75,7 +75,11 @@ try {
 
     Expand-Archive -Path (Join-Path $Tmp $Asset) -DestinationPath $Tmp -Force
     $Binary = Join-Path $Tmp "dmaf.exe"
-    if (-not (Test-Path $Binary)) { throw "install.ps1: archive does not contain dmaf.exe" }
+    if (-not (Test-Path $Binary)) {
+        # dist may nest archive contents one level deep in <archive-basename>/ - accept both shapes
+        $Nested = Get-ChildItem -Path $Tmp -Directory | ForEach-Object { Join-Path $_.FullName "dmaf.exe" } | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($Nested) { $Binary = $Nested } else { throw "install.ps1: archive does not contain dmaf.exe" }
+    }
 
     New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
     # Fixed location overwrite = upgrade (idempotent; -Force kept as explicit alias, installer never prompts)

@@ -146,12 +146,20 @@ tar -xJf "$TMPDIR_WORK/$ASSET" -C "$TMPDIR_WORK" || {
   printf 'install.sh: tar -xJf failed (is xz installed?)\n' >&2
   exit 4
 }
-if [ ! -f "$TMPDIR_WORK/dmaf" ]; then
+# dist 0.34 nests tar.xz contents one level deep in <archive-basename>/ — accept both shapes
+BIN=""
+for _c in "$TMPDIR_WORK/dmaf" "$TMPDIR_WORK"/*/dmaf; do
+  if [ -f "$_c" ]; then
+    BIN="$_c"
+    break
+  fi
+done
+if [ -z "$BIN" ]; then
   printf 'install.sh: archive does not contain ./dmaf\n' >&2
   exit 4
 fi
 mkdir -p "$INSTALL_DIR"
-mv -f "$TMPDIR_WORK/dmaf" "$INSTALL_DIR/dmaf"
+mv -f "$BIN" "$INSTALL_DIR/dmaf"
 chmod +x "$INSTALL_DIR/dmaf"
 
 # ---- PATH append (only when missing; auto rc per D9) ----

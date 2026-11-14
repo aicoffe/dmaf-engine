@@ -1,6 +1,9 @@
 # Rust build artifacts
 /target/
 
+# generated npm distribution package directory
+npm/pkg/
+
 # dmaf atomic-write temp files (leftovers from interrupted writes: *.tmp-<pid>-<n>)
 *.tmp
 *.tmp-*

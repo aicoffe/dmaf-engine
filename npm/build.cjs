@@ -41,15 +41,39 @@ for (const [target, meta] of Object.entries(TARGETS)) {
   const dir = path.join(OUT, meta.slug);
   const extractDir = path.join(dir, ".extract");
   fs.mkdirSync(extractDir, { recursive: true });
-  const r = spawnSync("tar", ["-xf", archive, "-C", extractDir], { stdio: "inherit" });
+  // GNU tar reads "F:/..." as a remote host (colon); bsdtar (Windows/macOS) doesn't — forward slashes
+  // everywhere and --force-local for GNU keep the invocation portable across shells on Windows.
+  // GNU tar cannot read .zip at all — fall back to PowerShell Expand-Archive (Windows).
+  const tarPath = (p) => p.replace(/\\/g, "/");
+  const tarVersion = spawnSync("tar", ["--version"], { encoding: "utf8" }).stdout || "";
+  const gnuTar = /GNU tar/.test(tarVersion);
+  let r = { status: 1 };
+  if (!(meta.zip && gnuTar)) {
+    const tarArgs = ["-xf", tarPath(archive), "-C", tarPath(extractDir)];
+    if (gnuTar) tarArgs.unshift("--force-local");
+    r = spawnSync("tar", tarArgs, { stdio: "inherit" });
+  }
+  if (r.status !== 0 && meta.zip && process.platform === "win32") {
+    const cmd = `Expand-Archive -LiteralPath '${archive}' -DestinationPath '${tarPath(extractDir)}' -Force`;
+    r = spawnSync("powershell", ["-NoProfile", "-Command", cmd], { stdio: "inherit" });
+  }
   if (r.status !== 0) {
     console.error(`build.cjs: tar -xf failed for ${archive} (xz-capable tar required; Windows 10+ built-in tar works)`);
     process.exit(1);
   }
-  const binSrc = path.join(extractDir, meta.exe);
+  let binSrc = path.join(extractDir, meta.exe);
   if (!fs.existsSync(binSrc)) {
-    console.error(`build.cjs: archive does not contain ./${meta.exe}: ${archive}`);
-    process.exit(1);
+    // dist 0.34 nests tar.xz contents one level deep in <archive-basename>/ (zips stay flat)
+    const nested = fs
+      .readdirSync(extractDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => path.join(extractDir, e.name, meta.exe))
+      .find((p) => fs.existsSync(p));
+    if (!nested) {
+      console.error(`build.cjs: archive does not contain ./${meta.exe}: ${archive}`);
+      process.exit(1);
+    }
+    binSrc = nested;
   }
   fs.mkdirSync(path.join(dir, "bin"), { recursive: true });
   fs.copyFileSync(binSrc, path.join(dir, "bin", meta.exe));
