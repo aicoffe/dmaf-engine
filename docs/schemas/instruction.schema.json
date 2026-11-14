@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DMAF Instruction",
+  "description": "dmaf next 返回给 Orchestrator 的类型化 JSON 指令",
+  "type": "object",
+  "required": ["instruction_id", "type", "workflow_id", "session_dir", "stage", "stage_state", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "instruction_id": {"type": "string"},
+    "type": {
+      "enum": ["dispatch", "await_approval", "retry", "park", "complete", "fail"]
+    },
+    "workflow_id": {"type": "string"},
+    "session_dir": {"type": "string"},
+    "stage": {"type": ["string", "null"]},
+    "stage_state": {"type": ["string", "null"]},
+    "payload": {"type": "object"}
+  }
+}

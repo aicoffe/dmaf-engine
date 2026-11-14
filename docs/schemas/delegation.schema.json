@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DMAF Delegation",
+  "description": "dispatch 指令中 action.delegation 的规范形态——Engine 预构造、Orchestrator 原样转发给 subagent 的委托报文。路径字段与 stage 定义同名（inputs/outputs），值为定义中名称模板解析后的完整路径；流程变量平铺为顶层字段。字段集由引擎固化，不随 stage 配置。",
+  "type": "object",
+  "required": ["role", "task_description", "inputs", "outputs"],
+  "additionalProperties": true,
+  "properties": {
+    "role": {
+      "const": "task_delegation",
+      "description": "协议标识，恒为 task_delegation"
+    },
+    "task_description": {
+      "type": "string",
+      "description": "stage 定义中 task_description 模板渲染后的字符串"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "stage agents[].inputs 解析后的完整路径；无输入为空数组"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "stage agents[].outputs 解析后的完整路径；无产出为空数组。写入目标约定：单产出 stage 的唯一路径即写入目标"
+    },
+    "revision_feedback": {
+      "type": "string",
+      "description": "仅修订轮出现（stage 处于 revising）：审批拒绝备注原文"
+    }
+  },
+  "note": "additionalProperties 承载流程变量平铺：会话 vars（含 defaults/派生/引擎注入）∪ AgentRef.vars 声明集。协议字段与同名变量冲突时以协议字段为准。"
+}

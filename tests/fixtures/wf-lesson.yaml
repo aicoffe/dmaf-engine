@@ -1,0 +1,110 @@
+# 引擎测试夹具工作流（与 dmaf/ 样例解耦）：保留 审批门/并行/重试-continue 语义，
+# 供 tests/common Driver 及全部引擎行为测试使用；agent/skill 清单见 common/mod.rs。
+
+workflow:
+  id: wf-lesson
+  name: 课件设计工作流
+
+  # TASK 为保留变量：start --task 提供需求原文，由首个 stage（intent）承接
+  # 交付文案模板（complete 指令时由引擎渲染为 payload.completion_text；与 scopes/lesson.md 保持逐字一致）
+  completion_template: |
+    课程设计完成！
+
+    产出物清单：
+    📄 研究分析报告: {outputs.research}
+    📋 PPT大纲:      {outputs.outline}
+    📊 PPT文件:      {outputs.pptx}
+    📝 题库与课程视频: {outputs.quiz-and-video}
+    ✅ 课程提交:      已提交至课程管理系统
+
+  stages:
+    - id: intent
+      collaboration: single
+      agents:
+        - agent: lesson-intent
+          skills: [lesson-intent]
+          inputs: []
+          outputs: ["dmaf-output/{SESSION_ID}/intent/意图文档.md"]
+          task_description: "判断以下需求是否为可制作的课件需求；是则提取知识点、目标受众与额外约束，产出意图文档：{TASK}"
+      retry:
+        max_attempts: 1
+        on_exhausted: abort_workflow
+      approval:
+        required: false
+
+    - id: research
+      collaboration: single
+      agents:
+        - agent: lesson-researcher
+          skills: [lesson-research]
+          inputs: ["dmaf-output/{SESSION_ID}/intent/意图文档.md"]
+          outputs: ["dmaf-output/{SESSION_ID}/research-reports/研究报告.md"]
+          task_description: "基于意图文档确定的知识点与受众，对'{TASK}'所述需求进行领域研究，生成面向初学者的研究分析报告"
+      retry:
+        max_attempts: 1
+        on_exhausted: abort_workflow
+      approval:
+        required: false
+
+    - id: outline
+      collaboration: single
+      agents:
+        - agent: lesson-outliner
+          skills: [lesson-outline]
+          inputs: ["dmaf-output/{SESSION_ID}/research-reports/研究报告.md"]
+          outputs: ["dmaf-output/{SESSION_ID}/outlines/PPT大纲.md"]
+          task_description: "基于研究分析报告，生成结构化PPT大纲"
+      retry:
+        max_attempts: 1
+        on_exhausted: abort_workflow
+      approval:
+        required: true
+        gate: outline-review
+
+    - id: pptx
+      collaboration: single
+      agents:
+        - agent: lesson-pptxer
+          skills: [lesson-pptx]
+          inputs: ["dmaf-output/{SESSION_ID}/outlines/PPT大纲.md", "dmaf-output/{SESSION_ID}/research-reports/研究报告.md"]
+          outputs: ["dmaf-output/{SESSION_ID}/pptx/课件.pptx"]
+          task_description: "基于PPT大纲和研究分析报告，创建完整课程PPT"
+      retry:
+        max_attempts: 1
+        on_exhausted: abort_workflow
+      approval:
+        required: false
+
+    - id: quiz-and-video
+      collaboration: parallel
+      agents:
+        - agent: lesson-quizzer
+          skills: [lesson-quiz]
+          inputs: ["dmaf-output/{SESSION_ID}/research-reports/研究报告.md"]
+          outputs: ["dmaf-output/{SESSION_ID}/questions/题库.json"]
+          task_description: "基于研究分析报告，生成面向初学者的结构化题库"
+        - agent: lesson-videoer
+          skills: [lesson-video]
+          inputs: ["dmaf-output/{SESSION_ID}/pptx/课件.pptx"]
+          outputs: ["dmaf-output/{SESSION_ID}/videos/课程视频.mp4"]
+          task_description: "将课程PPT转换为视频"
+      retry:
+        max_attempts: 1
+        on_exhausted: continue
+      approval:
+        required: false
+
+    - id: submit
+      collaboration: single
+      agents:
+        - agent: lesson-submiter
+          skills: [lesson-submit]
+          inputs: ["dmaf-output/{SESSION_ID}/pptx/课件.pptx", "dmaf-output/{SESSION_ID}/videos/课程视频.mp4", "dmaf-output/{SESSION_ID}/questions/题库.json", "dmaf-output/{SESSION_ID}/intent/意图文档.md"]
+          outputs: []
+          task_description: "将课程资源（PPT、视频、题库）提交到课程管理系统：标题与描述从意图文档提炼"
+          vars: [SESSION_ID]
+      retry:
+        max_attempts: 1
+        on_exhausted: abort_workflow
+      approval:
+        required: false

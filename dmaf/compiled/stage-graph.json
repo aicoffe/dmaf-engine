@@ -1,0 +1,684 @@
+{
+  "stages": [
+    {
+      "agents": [
+        {
+          "agent": "product-manager",
+          "dir": "",
+          "inputs": [],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/concept/{topic}-intent.md"
+          ],
+          "skills": [
+            "requirement-analysis"
+          ],
+          "task_description": "Original requirement text: \"{TASK}\". Capture in plain language the problems, expected outcomes, hard constraints, and open questions within it, producing an intent draft; open questions must be recorded explicitly, with no solutions given",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "intent-accept",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "always",
+      "id": "intent-capture",
+      "on_skip": "skip",
+      "phase": "concept",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-bugfix",
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "architect",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-high-fidelity-ue.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/design/{topic}-architecture-impact.md",
+            "dmaf-output/tech-stack.md"
+          ],
+          "skills": [
+            "architecture-analysis"
+          ],
+          "task_description": "Make the architecture impact judgment: greenfield defaults to needing design; brownfield checks the trigger conditions item by item (module boundaries / technology selection / service boundaries / integration patterns / non-functional architecture). Produce the impact statement; if design is needed, also list the hld revision points and an ADR draft; and produce or verify the project tech-stack declaration dmaf-output/tech-stack.md in three modes (selection advice / identification confirmation / audit), persisted to disk after confirmation at the approval gate",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "architecture-review",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "always",
+      "id": "architecture-analysis",
+      "on_skip": "skip",
+      "phase": "design",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "tech-lead",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-backend.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-frontend.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-high-fidelity-ue.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-architecture-impact.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-hld.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/design/{topic}-conflict-resolution.md"
+          ],
+          "skills": [],
+          "task_description": "Mark and classify conflicts among spec / hld / lld / UE (security vs UX, performance vs cost, compliance vs business; absent on-demand artifacts simply do not participate in the check), assign an adjudicator per conflict type and render adjudications; then fix the affected design artifacts based on the adjudication results, folding the fixes into the corresponding sections of this file",
+          "vars": [],
+          "watches": []
+        },
+        {
+          "agent": "product-manager",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-backend.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-frontend.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-high-fidelity-ue.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-hld.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-conflict-resolution.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/design/{topic}-design.md",
+            "dmaf-output/{SESSION_ID}/design/{topic}-spec-v2.md"
+          ],
+          "skills": [],
+          "task_description": "Finalize the design: verify spec ↔ architecture (hld if present, otherwise the architecture impact statement) ↔ lld ↔ UE consistency and how adjudications were resolved, produce the design.md index (linking the design artifacts actually produced; absent on-demand artifacts are not listed) and write back spec v2 — using the full text of spec v1 as the baseline, absorbing only the three categories of design-confirmed increments (the architecture-confirmed NFR plan, the UE contract, adjudication-revised acceptance criteria), rewriting nothing else and adding no revision-history section; v2 is the authoritative state, v1 the historical baseline",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "design-accept",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "sequential",
+      "execution": "always",
+      "id": "conflict-resolution",
+      "on_skip": "skip",
+      "phase": "design",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "backend-engineer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-architecture-impact.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-hld.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/design/{topic}-lld-backend.md"
+          ],
+          "skills": [
+            "detailed-design-backend"
+          ],
+          "task_description": "Author the backend detailed design based on the spec, the architecture conclusion, and the hld (if present): interfaces, classes, key algorithms, state machines, sequences, database physical design, exceptions and degradation, with an acceptance criteria mapping table attached",
+          "vars": [],
+          "watches": []
+        },
+        {
+          "agent": "frontend-engineer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-architecture-impact.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-hld.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-high-fidelity-ue.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/design/{topic}-lld-frontend.md"
+          ],
+          "skills": [
+            "detailed-design-frontend"
+          ],
+          "task_description": "Author the frontend detailed design based on the spec, the architecture conclusion, the hld (if present), and the UE prototype (if present, proto/** addressed via the delivery index): page / component / service layer / state partitioning, API integration conventions, interaction implementation points (aligned with the prototype mocks and interaction annotations), with an acceptance criteria mapping table attached",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "lld-review",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "parallel",
+      "execution": "always",
+      "id": "detailed-design",
+      "on_skip": "skip",
+      "phase": "design",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "ux-designer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md",
+              "required": true
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/design/{topic}-high-fidelity-ue.md"
+          ],
+          "skills": [
+            "ue-prototyper-react-mantine"
+          ],
+          "task_description": "Generate a coded UE prototype within the project's real React + Mantine stack based on the spec's UE contract: spec-first (proto/ue-spec.yaml), fenced scope proto/**, HTTP-layer mock, click-through review loop (?uer=1), productionization ledger gaps.md; on completion write the UE delivery index at the path in the outputs list (form, actual path of proto/manifest.json, review entry, feedback location, open items in gaps). For pure-backend / no-UI tasks, report skipped with a reason",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "ue-review",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "conditional",
+      "id": "hifi-ue",
+      "on_skip": "skip",
+      "phase": "design",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "architect",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-architecture-impact.md",
+              "required": true
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/design/{topic}-hld.md"
+          ],
+          "skills": [
+            "hld-design"
+          ],
+          "task_description": "Per the impact statement's conclusion, expand the design points into a complete hld review draft: style and module decomposition, module boundaries and responsibilities, key integration patterns, ADR completion (2–3 alternatives with rationale where real trade-offs exist, cited evidence where best practices / de facto standards exist), a non-functional plan covering all spec NFRs, verified consistent with the tech-stack declaration; when the conclusion is that no architecture design is needed (brownfield project with no trigger conditions), produce no document and report skipped with a reason",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "hld-review",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "conditional",
+      "id": "hld-design",
+      "on_skip": "skip",
+      "phase": "design",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "backend-engineer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-tasks.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-backend.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/development/{topic}-implementation-backend.md"
+          ],
+          "skills": [
+            "automated-testing",
+            "backend-development"
+          ],
+          "task_description": "Execute the backend tasks in the task list (lld absent means not produced on demand; the task list and its verification commands are the baseline): per-task TDD (Red failing test → Green minimal implementation → Refactor); after each task run full verification (tests / build / lint); when verification fails, fix and retry up to 3 times, then report; record task → change → verification evidence",
+          "vars": [],
+          "watches": []
+        },
+        {
+          "agent": "frontend-engineer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-tasks.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-frontend.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-high-fidelity-ue.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/development/{topic}-implementation-frontend.md"
+          ],
+          "skills": [
+            "automated-testing",
+            "frontend-development"
+          ],
+          "task_description": "Execute the frontend tasks in the task list (lld absent means not produced on demand; the task list and its verification commands are the baseline): implement components and interactions with per-task TDD, doing visual verification against the UE prototype and the click-through review export (if present; absent means not produced on demand); after each task run full verification (tests / build / lint); when verification fails, fix and retry up to 3 times, then report; record task → change → verification evidence",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "",
+        "required": false,
+        "reviewer": null
+      },
+      "collaboration": "sequential",
+      "execution": "always",
+      "id": "atomic-execution",
+      "on_skip": "skip",
+      "phase": "development",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-bugfix",
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "backend-engineer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-spec-v2.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-design.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-backend.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-frontend.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-high-fidelity-ue.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/development/{topic}-plan.md"
+          ],
+          "skills": [
+            "test-design",
+            "git-workflow"
+          ],
+          "task_description": "Based on spec v2 and the design artifacts (finalized design index / both llds / UE delivery index; absent means not produced on demand; all absent = the lightweight-flow form, with the spec as the sole baseline and an explicit \"no design backing\" declaration in the plan), generate an executable implementation plan in the planning state: change scope, implementation steps and their order, test strategy (aligned with acceptance criteria), risks and rollback plans",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "plan-review",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "always",
+      "id": "plan-generation",
+      "on_skip": "skip",
+      "phase": "development",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-bugfix",
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "backend-engineer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-plan.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-tasks.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-implementation-backend.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-implementation-frontend.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-system-test-report.md",
+              "required": true
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/development/{topic}-pr.md"
+          ],
+          "skills": [
+            "git-workflow",
+            "code-review",
+            "documentation"
+          ],
+          "task_description": "Prepare the PR: verify the diff matches the plan and llds and that tests cover all acceptance criteria (including the system test report); determine the documentation impact and update the affected documents (README / API contracts / CHANGELOG / ADR); organize task-level and system-level test evidence; attach a risk statement",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "pr-review",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "always",
+      "id": "pr-preparation",
+      "on_skip": "skip",
+      "phase": "development",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-bugfix",
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "qa-engineer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-spec-v2.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-backend.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-lld-frontend.md",
+              "required": false
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-implementation-backend.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-implementation-frontend.md",
+              "required": true
+            },
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/design/{topic}-high-fidelity-ue.md",
+              "required": false
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/development/{topic}-system-test-report.md"
+          ],
+          "skills": [
+            "automated-testing",
+            "contract-testing"
+          ],
+          "task_description": "Perform system-level verification on the integrated system: run end-to-end scenario tests against the spec v2 acceptance criteria (absent means the lightweight-flow form, falling back to spec v1; real dependencies preferred, Testcontainers standing up equivalent environments); perform interface contract verification against the lld contracts (when absent, the implementation and task list prevail; OpenAPI/schema validation); with a UE delivery index, walk the key user journeys against the prototype; produce the system test report (scenario coverage matrix, contract verification results, defect list). Discovered defects are recorded truthfully in the report (blocking items flagged, handled at the pr-review gate), and implementation code is not modified; report failure truthfully only when test environment problems make verification impossible to complete",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "",
+        "required": false,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "always",
+      "id": "system-testing",
+      "on_skip": "skip",
+      "phase": "development",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-bugfix",
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "backend-engineer",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/development/{topic}-plan.md",
+              "required": true
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/development/{topic}-tasks.md"
+          ],
+          "skills": [
+            "test-design"
+          ],
+          "task_description": "Break the implementation plan down into atomic tasks: each task independently implementable, independently verifiable, independently rollback-able, with TDD steps (which failing test to write first) and verification commands, annotated with dependency order and backend/frontend assignment",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "",
+        "required": false,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "always",
+      "id": "task-breakdown",
+      "on_skip": "skip",
+      "phase": "development",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-bugfix",
+        "sdlc-standard"
+      ]
+    },
+    {
+      "agents": [
+        {
+          "agent": "product-manager",
+          "dir": "",
+          "inputs": [
+            {
+              "artifact": "dmaf-output/{SESSION_ID}/concept/{topic}-intent.md",
+              "required": true
+            }
+          ],
+          "outputs": [
+            "dmaf-output/{SESSION_ID}/requirements/{topic}-spec.md"
+          ],
+          "skills": [
+            "requirement-analysis"
+          ],
+          "task_description": "Transform requirements from the intent draft: scope, user stories and acceptance criteria, NFRs (derived values marked as pending confirmation), UE contract; introduce no design decisions",
+          "vars": [],
+          "watches": []
+        }
+      ],
+      "approval": {
+        "gate": "spec-review",
+        "required": true,
+        "reviewer": null
+      },
+      "collaboration": "single",
+      "execution": "always",
+      "id": "spec-generation",
+      "on_skip": "skip",
+      "phase": "requirements",
+      "retry": {
+        "max_attempts": 1,
+        "on_exhausted": "abort_workflow"
+      },
+      "scopes": [
+        "sdlc-bugfix",
+        "sdlc-standard"
+      ]
+    }
+  ],
+  "version": 3
+}

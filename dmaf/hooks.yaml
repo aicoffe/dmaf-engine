@@ -1,0 +1,28 @@
+# D-MAF project-level hook configuration (dmaf/hooks.yaml): the engine invokes hooks
+# in the configured order and never reads their results.
+#
+# - init: run in sequence by `dmaf start` before the session is created; results never
+#   affect startup (veto or vars injection belongs in a caller wrapper layer);
+# - on-event: keys are audit event types (ten types; see the event vocabulary in the
+#   engine manual); each audit shard is looked up by type right after it is written;
+# - timeout_secs: per-hook wait cap (seconds, global, default 60). Do not run slow work
+#   synchronously inside a hook — write a task file instead and let a background
+#   process consume it;
+# - command form: a string (split on whitespace; use the list form for paths containing
+#   spaces) or a list (i.e. argv); spawned directly, never through a shell.
+#   On Windows, .cmd/.bat wrapped tools (npm etc.) must go through cmd explicitly:
+#   [cmd, /c, npm, ...]
+# - a hook's stdout is forwarded to the terminal's stderr (the engine's stdout contract
+#   is pure JSON); exit codes and output are never read by the engine.
+#
+# Hook commands resolve relative to the project root (process CWD). This entire file is
+# a commented example; keeping it commented means "no hooks configured". Delete the
+# leading "# " to enable:
+# timeout_secs: 60
+# init:
+#   - python dmaf/hooks/preflight.py
+# on-event:
+#   action.reported:
+#     - python hooks/upload.py
+#   workflow.completed:
+#     - python hooks/notify.py

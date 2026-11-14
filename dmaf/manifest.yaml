@@ -1,0 +1,7 @@
+# Workflow package manifest: identity and compatibility declaration. dmaf doctor reads it
+# to check binary compatibility; dmaf add/push/publish share this file.
+name: dmaf-sdlc
+version: 0.2.0
+description: AI-native SDLC standard workflow — deterministic programming with AI agents
+engine: ">=0.7,<0.8"
+harnesses: [opencode, claude, zcode, cursor, gemini, codex, dsh]
