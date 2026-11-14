@@ -43,7 +43,8 @@ for (const [target, meta] of Object.entries(TARGETS)) {
   fs.mkdirSync(extractDir, { recursive: true });
   // GNU tar reads "F:/..." as a remote host (colon); bsdtar (Windows/macOS) doesn't — forward slashes
   // everywhere and --force-local for GNU keep the invocation portable across shells on Windows.
-  // GNU tar cannot read .zip at all — fall back to PowerShell Expand-Archive (Windows).
+  // GNU tar cannot read .zip at all — bsdtar tar -xf handles zips, otherwise unzip (Linux/macOS)
+  // or PowerShell Expand-Archive (Windows)
   const tarPath = (p) => p.replace(/\\/g, "/");
   const tarVersion = spawnSync("tar", ["--version"], { encoding: "utf8" }).stdout || "";
   const gnuTar = /GNU tar/.test(tarVersion);
@@ -53,9 +54,10 @@ for (const [target, meta] of Object.entries(TARGETS)) {
     if (gnuTar) tarArgs.unshift("--force-local");
     r = spawnSync("tar", tarArgs, { stdio: "inherit" });
   }
-  if (r.status !== 0 && meta.zip && process.platform === "win32") {
-    const cmd = `Expand-Archive -LiteralPath '${archive}' -DestinationPath '${tarPath(extractDir)}' -Force`;
-    r = spawnSync("powershell", ["-NoProfile", "-Command", cmd], { stdio: "inherit" });
+  if (r.status !== 0 && meta.zip) {
+    r = process.platform === "win32"
+      ? spawnSync("powershell", ["-NoProfile", "-Command", `Expand-Archive -LiteralPath '${archive}' -DestinationPath '${tarPath(extractDir)}' -Force`], { stdio: "inherit" })
+      : spawnSync("unzip", ["-o", tarPath(archive), "-d", tarPath(extractDir)], { stdio: "inherit" });
   }
   if (r.status !== 0) {
     console.error(`build.cjs: tar -xf failed for ${archive} (xz-capable tar required; Windows 10+ built-in tar works)`);
