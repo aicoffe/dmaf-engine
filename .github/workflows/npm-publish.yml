@@ -34,6 +34,12 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # must be declared explicitly: without it the job does not receive the caller's
+    # id-token grant, ACTIONS_ID_TOKEN_* never get injected, and npm fails with
+    # ENEEDAUTH instead of engaging trusted publishing (bounded by the caller's grant)
+    permissions:
+      contents: read
+      id-token: write
     env:
       GH_TOKEN: ${{ github.token }}
       REF_NAME: ${{ github.ref_name }}
@@ -87,6 +93,7 @@ jobs:
 
       - name: Publish (platform packages first, main package last)
         run: |
+          npm --version   # trusted publishing needs npm >= 11.5.1
           # trusted publishing only: strip the _authToken line setup-node wrote (it expands
           # ${NODE_AUTH_TOKEN}) so a stray token cannot shadow the OIDC path - npm rejects
           # bypass-2FA tokens for direct publishing with a bare 404 on PUT
